@@ -1,12 +1,12 @@
 'use strict';
 
-const uploadedPhotos = [];
-
 const IMAGES_COUNT = 25;
 const USERS_COUNT = 6;
 const MIN_LIKES = 15;
 const MAX_LIKES = 200;
 const MAX_COMMENTS = 4;
+
+const uploadedPhotos = [];
 
 const descriptions = [
     'Тестим новую камеру!',
@@ -26,30 +26,35 @@ const messagesInComments = [
     'Лица у людей на фотке перекошены, как будто их избивают. Как можно было поймать такой неудачный момент?!',
 ];
 
-const names = ['Шура', 'Никифор', 'Тимур',
-               'Вова', 'Егор', 'Иван',
-               'Ферапонт', 'Тёма', 'Рома',
-               'Ирений', 'Паша', 'Влад',
-               'Саша', 'Боря', 'Володя',
-               'Лев', 'Слава', 'Макс',
-               'Абрам', 'Филипп', 'Артур'];
-
-const pictureTemplate = document.querySelector('#picture');
-const pictureFragment = new DocumentFragment();
+const names = [
+    'Шура', 'Никифор', 'Тимур',
+    'Вова', 'Егор', 'Иван',
+    'Ферапонт', 'Тёма', 'Рома',
+    'Ирений', 'Паша', 'Влад',
+    'Саша', 'Боря', 'Володя',
+    'Лев', 'Слава', 'Макс',
+    'Абрам', 'Филипп', 'Артур',
+];
 
 
 function generateNumber(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
-function picturesGenerateDOM(data) {
-    for (let k = 0; k < data.length; k++) {
-        pictureFragment.appendChild(picturesSetData(data[k]));
-    }
+function generatePicturesDOM(data) {   
+    const pictureFragment = new DocumentFragment();
+
+    data.forEach(function(picture) {
+        pictureFragment.appendChild(setPictureData(picture));
+    });
+    
+    document.querySelector('.pictures').appendChild(pictureFragment);
 }
 
-function picturesSetData(data) {
-    let pictureClone = pictureTemplate.content.cloneNode(true);
+
+function setPictureData(data) {
+    const pictureTemplate = document.querySelector('#picture');
+    const pictureClone = pictureTemplate.content.cloneNode(true);
     pictureClone.querySelector('.picture__img').src = data.url;
     pictureClone.querySelector('.picture__img').alt = data.description;
     pictureClone.querySelector('.picture__comments').textContent = data.comments.length;
@@ -61,12 +66,19 @@ function picturesSetData(data) {
 function loadBigPicture(photo) {
     const bigPicture = document.querySelector('.big-picture');
 
-    bigPicture.querySelector('.big-picture__img>img').src = photo.url;
+    bigPicture.querySelector('.big-picture__img img').src = photo.url;
     bigPicture.querySelector('.likes-count').textContent = photo.likes;
     bigPicture.querySelector('.comments-count').textContent = photo.comments.length;
     bigPicture.querySelector('.social__caption').textContent = photo.description;
+    bigPicture.querySelector('.social__comments').innerHTML = buildComments(photo.comments);
 
-    const comments = photo.comments.map(comment => {
+    bigPicture.querySelector('.social__comment-count').classList.add('visually-hidden');
+    bigPicture.querySelector('.comments-loader').classList.add('visually-hidden');
+    bigPicture.classList.remove('hidden');
+}
+
+function buildComments(data) {
+    return data.map(comment => {
         return `<li class="social__comment">
           <img class="social__picture" src="${comment.avatar}"
             alt="${comment.name}"
@@ -74,23 +86,20 @@ function loadBigPicture(photo) {
           <p class="social__text">${comment.message}</p>
         </li>`;
       }).join('');
-
-    bigPicture.querySelector('.social__comments').innerHTML = comments;
-
-    document.querySelector('.social__comment-count').classList.add('visually-hidden');
-    document.querySelector('.comments-loader').classList.add('visually-hidden');
-    bigPicture.classList.remove('hidden');
 }
 
 for (let i = 1; i <= IMAGES_COUNT; i++) {
-    let comments = [];
-    for (let j = 0; j <= generateNumber(0, MAX_COMMENTS); j++) {
+    const comments = [];
+    const commentsCount = generateNumber(0, MAX_COMMENTS);
+
+    for (let j = 0; j <= commentsCount; j++) {
         comments.push({
             avatar: `img/avatar-${generateNumber(1, USERS_COUNT)}.svg`,
             message: messagesInComments[generateNumber(0, messagesInComments.length)],
             name: names[generateNumber(0, names.length)],
         });
     }
+
     uploadedPhotos.push({
         url: `photos/${i}.jpg`,
         likes: generateNumber(MIN_LIKES, MAX_LIKES),
@@ -99,8 +108,7 @@ for (let i = 1; i <= IMAGES_COUNT; i++) {
     });
 }
 
-picturesGenerateDOM(uploadedPhotos);
-document.querySelector('.pictures').appendChild(pictureFragment);
+generatePicturesDOM(uploadedPhotos);
 
 loadBigPicture(uploadedPhotos[0]);
 
