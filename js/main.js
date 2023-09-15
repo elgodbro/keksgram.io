@@ -45,19 +45,23 @@ function generatePicturesDOM(photos) {
     const pictureFragment = new DocumentFragment();
     const pictureTemplate = document.querySelector('#picture');
 
-    photos.map(picture => {
+    function setPictureData(picture) {
         const pictureClone = pictureTemplate.content.cloneNode(true);
-
         pictureClone.querySelector('.picture__img').src = picture.url;
         pictureClone.querySelector('.picture__img').alt = picture.description;
         pictureClone.querySelector('.picture__comments').textContent = picture.comments.length;
         pictureClone.querySelector('.picture__likes').textContent = picture.likes;
 
-        pictureFragment.appendChild(pictureClone);
+        return pictureClone;
+    }
+
+    photos.forEach(picture => {
+        pictureFragment.appendChild(setPictureData(picture));
     });
-    
+
     document.querySelector('.pictures').appendChild(pictureFragment);
 }
+
 
 function loadBigPicture(photo) {
     const bigPicture = document.querySelector('.big-picture');
