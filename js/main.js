@@ -41,26 +41,22 @@ function generateNumber(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
-function generatePicturesDOM(data) {   
+function generatePicturesDOM(photos) {   
     const pictureFragment = new DocumentFragment();
+    const pictureTemplate = document.querySelector('#picture');
 
-    data.forEach(function(picture) {
-        pictureFragment.appendChild(setPictureData(picture));
+    photos.map(picture => {
+        const pictureClone = pictureTemplate.content.cloneNode(true);
+
+        pictureClone.querySelector('.picture__img').src = picture.url;
+        pictureClone.querySelector('.picture__img').alt = picture.description;
+        pictureClone.querySelector('.picture__comments').textContent = picture.comments.length;
+        pictureClone.querySelector('.picture__likes').textContent = picture.likes;
+
+        pictureFragment.appendChild(pictureClone);
     });
     
     document.querySelector('.pictures').appendChild(pictureFragment);
-}
-
-
-function setPictureData(data) {
-    const pictureTemplate = document.querySelector('#picture');
-    const pictureClone = pictureTemplate.content.cloneNode(true);
-    pictureClone.querySelector('.picture__img').src = data.url;
-    pictureClone.querySelector('.picture__img').alt = data.description;
-    pictureClone.querySelector('.picture__comments').textContent = data.comments.length;
-    pictureClone.querySelector('.picture__likes').textContent = data.likes;
-
-    return pictureClone;
 }
 
 function loadBigPicture(photo) {
@@ -77,8 +73,8 @@ function loadBigPicture(photo) {
     bigPicture.classList.remove('hidden');
 }
 
-function buildComments(data) {
-    return data.map(comment => {
+function buildComments(comments) {
+    return comments.map(comment => {
         return `<li class="social__comment">
           <img class="social__picture" src="${comment.avatar}"
             alt="${comment.name}"
