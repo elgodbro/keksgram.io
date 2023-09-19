@@ -5,6 +5,7 @@ const USERS_COUNT = 6;
 const MIN_LIKES = 15;
 const MAX_LIKES = 200;
 const MAX_COMMENTS = 4;
+const ESC_KEYCODE = 27;
 
 const uploadedPhotos = [];
 
@@ -44,6 +45,7 @@ function generateNumber(min, max) {
 function generatePicturesDOM(photos) {   
     const pictureFragment = new DocumentFragment();
     const pictureTemplate = document.querySelector('#picture');
+    const picturesContainer = document.querySelector('.pictures');
 
     function setPictureData(picture) {
         const pictureClone = pictureTemplate.content.cloneNode(true);
@@ -59,13 +61,17 @@ function generatePicturesDOM(photos) {
         pictureFragment.appendChild(setPictureData(picture));
     });
 
-    document.querySelector('.pictures').appendChild(pictureFragment);
+    picturesContainer.addEventListener('click', openBigPicture);
+    picturesContainer.appendChild(pictureFragment);
 }
 
+function findImgInObj(element) {
+    let trimmedUrl = element.src.substring(element.src.lastIndexOf('/') - 6);
+    let imageIndex = uploadedPhotos.findIndex((el) => el.url === trimmedUrl);
+    loadBigPicture(uploadedPhotos[imageIndex]);
+}
 
 function loadBigPicture(photo) {
-    const bigPicture = document.querySelector('.big-picture');
-
     bigPicture.querySelector('.big-picture__img img').src = photo.url;
     bigPicture.querySelector('.likes-count').textContent = photo.likes;
     bigPicture.querySelector('.comments-count').textContent = photo.comments.length;
@@ -108,8 +114,77 @@ for (let i = 1; i <= IMAGES_COUNT; i++) {
     });
 }
 
+//Обработчик загрузки изображений
+const uploadImg = document.querySelector('.img-upload__form');
+const uploadImgInput = uploadImg.querySelector('#upload-file');
+const uploadImgOverlay = uploadImg.querySelector('.img-upload__overlay');
+const closeUploadImgOverlay = uploadImgOverlay.querySelector('.img-upload__cancel');
+const preview = uploadImg.querySelector('.img-upload__preview img');
+
+uploadImgInput.addEventListener('change', () => {
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+        preview.src = reader.result;
+    });
+
+    reader.readAsDataURL(uploadImgInput.files[0]);
+    showUploadEdit(); 
+
+    console.log(uploadImgInput.files[0])
+}
+);
+
+function showUploadEdit() {
+    uploadImgOverlay.classList.remove('hidden');
+    closeUploadImgOverlay.addEventListener('click', closeUploadEdit);
+    document.addEventListener('keydown', cancelUploadOnEsc);
+}
+
+function closeUploadEdit() {
+    uploadImgOverlay.classList.add('hidden');
+    closeUploadImgOverlay.removeEventListener('click', closeUploadEdit);
+    document.removeEventListener('keydown', cancelUploadOnEsc);
+    uploadImg.reset();
+}
+
+function cancelUploadOnEsc(evt) {
+    if (evt.keyCode === ESC_KEYCODE) {
+        evt.preventDefault();
+        closeUploadEdit();
+    }
+}
+
+
+//Открытие картинки в полном размере
+let targetImage;
+const bigPicture = document.querySelector('.big-picture');
+const closeButton = bigPicture.querySelector('.big-picture__cancel');
+function openBigPicture(evt) {
+    targetImage = evt.target;
+    if (evt.target.classList.contains('picture__img')) {
+        findImgInObj(targetImage);
+        document.addEventListener('keydown', closeBigPictureOnEscPress);
+        closeButton.addEventListener('click', closeBigPicture);
+        
+        console.log(evt.target)
+    }
+}
+
+function closeBigPicture() {
+    bigPicture.classList.add('hidden');
+    document.removeEventListener('keydown', closeBigPictureOnEscPress);
+    closeButton.removeEventListener('click', closeBigPicture);
+}
+
+function closeBigPictureOnEscPress(evt) {
+    if (evt.keyCode === ESC_KEYCODE) {
+        evt.preventDefault();
+        closeBigPicture();
+    }
+}
+
 generatePicturesDOM(uploadedPhotos);
 
-loadBigPicture(uploadedPhotos[0]);
+//loadBigPicture(uploadedPhotos[0]);
 
 console.log(uploadedPhotos);
