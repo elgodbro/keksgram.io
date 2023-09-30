@@ -5,7 +5,6 @@ const USERS_COUNT = 6;
 const MIN_LIKES = 15;
 const MAX_LIKES = 200;
 const MAX_COMMENTS = 4;
-const ESC_KEYCODE = 27;
 
 const uploadedPhotos = [];
 
@@ -65,10 +64,10 @@ function generatePicturesDOM(photos) {
     picturesContainer.appendChild(pictureFragment);
 }
 
-function findImgInObj(element) {
-    let trimmedUrl = element.src.substring(element.src.lastIndexOf('/') - 6);
-    let imageIndex = uploadedPhotos.findIndex((el) => el.url === trimmedUrl);
-    loadBigPicture(uploadedPhotos[imageIndex]);
+function getImageIndex(element) {
+    const imageId = element.src.split("/").pop();
+    const imageIndex = uploadedPhotos.findIndex((image) => image.url.endsWith(imageId));
+    return imageIndex;
 }
 
 function loadBigPicture(photo) {
@@ -118,68 +117,74 @@ for (let i = 1; i <= IMAGES_COUNT; i++) {
 const uploadImg = document.querySelector('.img-upload__form');
 const uploadImgInput = uploadImg.querySelector('#upload-file');
 const uploadImgOverlay = uploadImg.querySelector('.img-upload__overlay');
-const closeUploadImgOverlay = uploadImgOverlay.querySelector('.img-upload__cancel');
-const preview = uploadImg.querySelector('.img-upload__preview img');
+const cancelUploadBtn = uploadImgOverlay.querySelector('.img-upload__cancel');
+const previewUploadImg = uploadImg.querySelector('.img-upload__preview img');
 
 uploadImgInput.addEventListener('change', () => {
     const reader = new FileReader();
     reader.addEventListener('load', () => {
-        preview.src = reader.result;
+        previewUploadImg.src = reader.result;
     });
 
+    const file = uploadImgInput.files[0];
+    const allowedExtensions = ['jpg', 'png', 'jpeg'];
+
+    if (!allowedExtensions.includes(file.name.split('.')[1])) {
+        alert('Недопустимый формат файла');
+        uploadImgInput.value = '';
+        return;
+    }
+
     reader.readAsDataURL(uploadImgInput.files[0]);
-    showUploadEdit(); 
+    showEditForm();
 
     console.log(uploadImgInput.files[0])
-}
-);
+});
 
-function showUploadEdit() {
+
+function showEditForm() {
     uploadImgOverlay.classList.remove('hidden');
-    closeUploadImgOverlay.addEventListener('click', closeUploadEdit);
-    document.addEventListener('keydown', cancelUploadOnEsc);
+    cancelUploadBtn.addEventListener('click', onCloseButtonClick);
+    document.addEventListener('keydown', editFormEscPressHandler);
 }
 
-function closeUploadEdit() {
+function onCloseButtonClick() {
     uploadImgOverlay.classList.add('hidden');
-    closeUploadImgOverlay.removeEventListener('click', closeUploadEdit);
-    document.removeEventListener('keydown', cancelUploadOnEsc);
+    cancelUploadBtn.removeEventListener('click', onCloseButtonClick);
+    document.removeEventListener('keydown', editFormEscPressHandler);
     uploadImg.reset();
 }
 
-function cancelUploadOnEsc(evt) {
-    if (evt.keyCode === ESC_KEYCODE) {
+function editFormEscPressHandler(evt) {
+    if (evt.key === 'Escape') {
         evt.preventDefault();
-        closeUploadEdit();
+        onCloseButtonClick();
     }
 }
 
 
 //Открытие картинки в полном размере
-let targetImage;
 const bigPicture = document.querySelector('.big-picture');
 const closeButton = bigPicture.querySelector('.big-picture__cancel');
+
 function openBigPicture(evt) {
-    targetImage = evt.target;
     if (evt.target.classList.contains('picture__img')) {
-        findImgInObj(targetImage);
-        document.addEventListener('keydown', closeBigPictureOnEscPress);
-        closeButton.addEventListener('click', closeBigPicture);
-        
-        console.log(evt.target)
+        loadBigPicture(uploadedPhotos[getImageIndex(evt.target)]);
+        closeButton.addEventListener('click', onBigPictureCloseButtonClick);
+        document.addEventListener('keydown', bigPictureEscPressHandler);
     }
 }
 
-function closeBigPicture() {
+function onBigPictureCloseButtonClick() {
     bigPicture.classList.add('hidden');
-    document.removeEventListener('keydown', closeBigPictureOnEscPress);
-    closeButton.removeEventListener('click', closeBigPicture);
+    closeButton.removeEventListener('click', onBigPictureCloseButtonClick);
+    document.removeEventListener('keydown', bigPictureEscPressHandler);
 }
 
-function closeBigPictureOnEscPress(evt) {
-    if (evt.keyCode === ESC_KEYCODE) {
+function bigPictureEscPressHandler(evt) {
+    if (evt.key === 'Escape') {
         evt.preventDefault();
-        closeBigPicture();
+        onBigPictureCloseButtonClick();
     }
 }
 
