@@ -46,8 +46,10 @@ function generatePicturesDOM(photos) {
     const pictureTemplate = document.querySelector('#picture');
     const picturesContainer = document.querySelector('.pictures');
 
-    function setPictureData(picture) {
+    function setPictureData(picture, index) {
         const pictureClone = pictureTemplate.content.cloneNode(true);
+        
+        pictureClone.querySelector('.picture__img').dataset.imageIndex = index;
         pictureClone.querySelector('.picture__img').src = picture.url;
         pictureClone.querySelector('.picture__img').alt = picture.description;
         pictureClone.querySelector('.picture__comments').textContent = picture.comments.length;
@@ -56,18 +58,13 @@ function generatePicturesDOM(photos) {
         return pictureClone;
     }
 
-    photos.forEach(picture => {
-        pictureFragment.appendChild(setPictureData(picture));
+    photos.forEach((picture, index) => {
+        pictureFragment.appendChild(setPictureData(picture, index));
     });
 
     picturesContainer.addEventListener('click', openBigPicture);
+    document.addEventListener('keydown', picturesContainerKeydownHandler);
     picturesContainer.appendChild(pictureFragment);
-}
-
-function getImageIndex(element) {
-    const imageId = element.src.split("/").pop();
-    const imageIndex = uploadedPhotos.findIndex((image) => image.url.endsWith(imageId));
-    return imageIndex;
 }
 
 function loadBigPicture(photo) {
@@ -144,21 +141,21 @@ uploadImgInput.addEventListener('change', () => {
 
 function showEditForm() {
     uploadImgOverlay.classList.remove('hidden');
-    cancelUploadBtn.addEventListener('click', onCloseButtonClick);
-    document.addEventListener('keydown', editFormEscPressHandler);
+    cancelUploadBtn.addEventListener('click', onCancelUploadBtnClick);
+    document.addEventListener('keydown', editFormKeydownHandler);
 }
 
-function onCloseButtonClick() {
+function onCancelUploadBtnClick() {
     uploadImgOverlay.classList.add('hidden');
-    cancelUploadBtn.removeEventListener('click', onCloseButtonClick);
-    document.removeEventListener('keydown', editFormEscPressHandler);
+    cancelUploadBtn.removeEventListener('click', onCancelUploadBtnClick);
+    document.removeEventListener('keydown', editFormKeydownHandler);
     uploadImg.reset();
 }
 
-function editFormEscPressHandler(evt) {
+function editFormKeydownHandler(evt) {
     if (evt.key === 'Escape') {
         evt.preventDefault();
-        onCloseButtonClick();
+        onCancelUploadBtnClick();
     }
 }
 
@@ -169,27 +166,33 @@ const closeButton = bigPicture.querySelector('.big-picture__cancel');
 
 function openBigPicture(evt) {
     if (evt.target.classList.contains('picture__img')) {
-        loadBigPicture(uploadedPhotos[getImageIndex(evt.target)]);
-        closeButton.addEventListener('click', onBigPictureCloseButtonClick);
-        document.addEventListener('keydown', bigPictureEscPressHandler);
+        loadBigPicture(uploadedPhotos[evt.target.dataset.imageIndex]);
+        closeButton.addEventListener('click', onCloseButtonClick);
+        document.addEventListener('keydown', bigPictureKeydownHandler);
     }
 }
 
-function onBigPictureCloseButtonClick() {
-    bigPicture.classList.add('hidden');
-    closeButton.removeEventListener('click', onBigPictureCloseButtonClick);
-    document.removeEventListener('keydown', bigPictureEscPressHandler);
+function picturesContainerKeydownHandler(evt) {
+    if (evt.key === 'Enter') {
+        const targetImage = evt.target.querySelector('.picture__img');
+        loadBigPicture(uploadedPhotos[targetImage.dataset.imageIndex]);
+        closeButton.addEventListener('click', onCloseButtonClick);
+        document.addEventListener('keydown', bigPictureKeydownHandler);
+    }
 }
 
-function bigPictureEscPressHandler(evt) {
+function onCloseButtonClick() {
+    bigPicture.classList.add('hidden');
+    closeButton.removeEventListener('click', onCloseButtonClick);
+    document.removeEventListener('keydown', bigPictureKeydownHandler);
+}
+
+function bigPictureKeydownHandler(evt) {
     if (evt.key === 'Escape') {
         evt.preventDefault();
-        onBigPictureCloseButtonClick();
+        onCloseButtonClick();
     }
 }
 
 generatePicturesDOM(uploadedPhotos);
-
-//loadBigPicture(uploadedPhotos[0]);
-
 console.log(uploadedPhotos);
