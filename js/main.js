@@ -6,6 +6,11 @@ const MIN_LIKES = 15;
 const MAX_LIKES = 200;
 const MAX_COMMENTS = 4;
 
+const Key = {
+    ESCAPE: 'Escape',
+    ENTER: 'Enter',
+};
+
 const uploadedPhotos = [];
 
 const descriptions = [
@@ -62,8 +67,8 @@ function generatePicturesDOM(photos) {
         pictureFragment.appendChild(setPictureData(picture, index));
     });
 
-    picturesContainer.addEventListener('click', openBigPicture);
-    document.addEventListener('keydown', picturesContainerKeydownHandler);
+    picturesContainer.addEventListener('click', onBigPictureClick);
+    document.addEventListener('keydown', onPicturesContainerKeydown);
     picturesContainer.appendChild(pictureFragment);
 }
 
@@ -142,18 +147,18 @@ uploadImgInput.addEventListener('change', () => {
 function showEditForm() {
     uploadImgOverlay.classList.remove('hidden');
     cancelUploadBtn.addEventListener('click', onCancelUploadBtnClick);
-    document.addEventListener('keydown', editFormKeydownHandler);
+    document.addEventListener('keydown', onEditFormKeydown);
 }
 
 function onCancelUploadBtnClick() {
     uploadImgOverlay.classList.add('hidden');
     cancelUploadBtn.removeEventListener('click', onCancelUploadBtnClick);
-    document.removeEventListener('keydown', editFormKeydownHandler);
+    document.removeEventListener('keydown', onEditFormKeydown);
     uploadImg.reset();
 }
 
-function editFormKeydownHandler(evt) {
-    if (evt.key === 'Escape') {
+function onEditFormKeydown(evt) {
+    if (evt.key === Key.ESCAPE) {
         evt.preventDefault();
         onCancelUploadBtnClick();
     }
@@ -164,31 +169,31 @@ function editFormKeydownHandler(evt) {
 const bigPicture = document.querySelector('.big-picture');
 const closeButton = bigPicture.querySelector('.big-picture__cancel');
 
-function openBigPicture(evt) {
+function onBigPictureClick(evt) {
     if (evt.target.classList.contains('picture__img')) {
         loadBigPicture(uploadedPhotos[evt.target.dataset.imageIndex]);
         closeButton.addEventListener('click', onCloseButtonClick);
-        document.addEventListener('keydown', bigPictureKeydownHandler);
+        document.addEventListener('keydown', onBigPictureKeydown);
     }
 }
 
-function picturesContainerKeydownHandler(evt) {
-    if (evt.key === 'Enter') {
+function onPicturesContainerKeydown(evt) {
+    if (evt.key === Key.ENTER) {
         const targetImage = evt.target.querySelector('.picture__img');
         loadBigPicture(uploadedPhotos[targetImage.dataset.imageIndex]);
         closeButton.addEventListener('click', onCloseButtonClick);
-        document.addEventListener('keydown', bigPictureKeydownHandler);
+        document.addEventListener('keydown', onBigPictureKeydown);
     }
 }
 
 function onCloseButtonClick() {
     bigPicture.classList.add('hidden');
     closeButton.removeEventListener('click', onCloseButtonClick);
-    document.removeEventListener('keydown', bigPictureKeydownHandler);
+    document.removeEventListener('keydown', onBigPictureKeydown);
 }
 
-function bigPictureKeydownHandler(evt) {
-    if (evt.key === 'Escape') {
+function onBigPictureKeydown(evt) {
+    if (evt.key === Key.ESCAPE) {
         evt.preventDefault();
         onCloseButtonClick();
     }
