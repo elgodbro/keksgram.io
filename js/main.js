@@ -129,6 +129,7 @@ const uploadImgOverlay = uploadImg.querySelector('.img-upload__overlay');
 const cancelUploadBtn = uploadImgOverlay.querySelector('.img-upload__cancel');
 const previewUploadImg = uploadImg.querySelector('.img-upload__preview img');
 const hashtagsInput = uploadImg.querySelector("input[name=hashtags]");
+const successMsgTemplate = document.querySelector('#success');
 
 uploadImgInput.addEventListener('change', () => {
     const reader = new FileReader();
@@ -269,8 +270,6 @@ function getValidationErros(hashtags) {
     
     return false;
 }
-
-const successMsgTemplate = document.querySelector('#success');
 
 function showSuccessMsg() {
   const successMsgFragment = document.createDocumentFragment();
