@@ -48,6 +48,10 @@ function generateNumber(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
+function insertAfter(referenceNode, newNode) {
+    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+}
+
 function generatePicturesDOM(photos) {
     const pictureFragment = new DocumentFragment();
     const pictureTemplate = document.querySelector('#picture');
@@ -117,13 +121,14 @@ for (let i = 1; i <= IMAGES_COUNT; i++) {
     });
 }
 
-//Обработчик загрузки изображений
-const uploadImg = document.querySelector('.img-upload__form');
+const mainBlock = document.querySelector('main');
+const footerBlock = document.querySelector('footer');
+const uploadImg = mainBlock.querySelector('.img-upload__form');
 const uploadImgInput = uploadImg.querySelector('#upload-file');
 const uploadImgOverlay = uploadImg.querySelector('.img-upload__overlay');
 const cancelUploadBtn = uploadImgOverlay.querySelector('.img-upload__cancel');
 const previewUploadImg = uploadImg.querySelector('.img-upload__preview img');
-const hashtagsInput = document.querySelector("input[name=hashtags]");
+const hashtagsInput = uploadImg.querySelector("input[name=hashtags]");
 
 uploadImgInput.addEventListener('change', () => {
     const reader = new FileReader();
@@ -149,6 +154,7 @@ uploadImgInput.addEventListener('change', () => {
 function initEditFormListeners() {
     cancelUploadBtn.addEventListener('click', onCancelUploadBtnClick);
     document.addEventListener('keydown', onEditFormKeydown);
+    hashtagsInput.addEventListener("change", validateHashtags);
 }
 
 function removeEditFormListeners() {
@@ -165,7 +171,7 @@ function closeEditForm() {
     uploadImgOverlay.classList.add('hidden');
     removeEditFormListeners();
     uploadImg.reset();
-    errorSpan.classList.remove('show');
+    hashtagsInput.removeEventListener("change", validateHashtags);
 }
 
 function onCancelUploadBtnClick() {
@@ -191,9 +197,9 @@ uploadImg.addEventListener('submit', (evt) => {
 
 });
 
-hashtagsInput.addEventListener("input", () => {
+function validateHashtags() {
     const hashtags = hashtagsInput.value.toLowerCase().trim().split(" ");
-    const isValid = validateHashtags(hashtags);
+    const isValid = getValidationErros(hashtags);
 
     if (isValid instanceof Error) {
         hashtagsInput.setCustomValidity(isValid.message);
@@ -202,8 +208,7 @@ hashtagsInput.addEventListener("input", () => {
         hashtagsInput.setCustomValidity("");
         console.log(isValid);
     }
-});
-
+}
 
 function doUploadImg(data) {
     for (const [key, value] of data) {
@@ -213,17 +218,8 @@ function doUploadImg(data) {
     showSuccessMsg();
 }
 
-function validateHashtags(hashtags) {
-    const errorMessages = {
-        unique: 'Хэш-теги должен быть уникальным',
-        startWith: 'Хэш-тег должен начинаться с решетки (#)',
-        oneSymbol: `Хэш-тег не может состоять только из решетки (#)`,
-        spaces: 'Хэш-теги должны разделяться пробелами',
-        tooMany: `Нельзя указать больше ${HASHTAGS_MAXCOUNT} хэш-тегов`,
-        tooLong: `Максимальная длина хэш-тега - ${HASHTAGS_MAXLENGTH} символов`,
-    };
-
-    let errors = {
+function doHashtagsValidation(hashtags) {
+    const error = {
         unique: false,
         startWith: false,
         oneSymbol: false,
@@ -232,66 +228,54 @@ function validateHashtags(hashtags) {
         tooMany: false,
     };
 
-    let humanReadableErrorMessages = "";
-
-
-    if (hashtags.length > HASHTAGS_MAXCOUNT) {
-        errors.tooMany = true;
-    }
-
-    if (!checkUnique(hashtags)) {
-        errors.unique = true;
-    }
+    error.tooMany = hashtags.length > HASHTAGS_MAXCOUNT || error.tooMany;
+    error.unique = !checkUnique(hashtags) || error.unique;
     
     for (const tag of hashtags) {
-
-        if (!tag.startsWith("#")) {
-            errors.startWith = true;
-        }
-
-        if (tag.length === 1) {
-            errors.oneSymbol = true;
-        }
-
-        if (tag.includes('#', 1)) {
-            errors.spaces = true;
-        }
-
-        if (tag.length > HASHTAGS_MAXLENGTH) {
-            errors.tooLong = true;
-        }
-
+        error.startWith = !tag.startsWith("#") || error.startWith;
+        error.oneSymbol = tag.length === 1 || error.oneSymbol;
+        error.spaces = tag.includes('#', 1) || error.spaces;
+        error.tooLong = tag.length > HASHTAGS_MAXLENGTH || error.tooLong;
     }
 
     function checkUnique(hashtags) {
-        return hashtags.every((current, index) => {
-            return hashtags.indexOf(current) === index;
-        })
-    }
-
+        return hashtags.length === new Set(hashtags).size;
+    }    
     
+    return error;
+}
+
+function getValidationErros(hashtags) {
+    const errorMessages = {
+        unique: 'Хэш-теги должен быть уникальным',
+        startWith: 'Хэш-тег должен начинаться с решетки (#)',
+        oneSymbol: `Хэш-тег не может состоять только из решетки (#)`,
+        spaces: 'Хэш-теги должны разделяться пробелами',
+        tooMany: `Нельзя указать больше ${HASHTAGS_MAXCOUNT} хэш-тегов`,
+        tooLong: `Максимальная длина хэш-тега - ${HASHTAGS_MAXLENGTH} символов`,
+    };
+    const errors = doHashtagsValidation(hashtags);
+    let humanReadableErrorMessages = "";
+
     for (const errorName in errors) {
         if (errors[errorName]) {
             humanReadableErrorMessages += errorMessages[errorName] + '\n';
         }
     }
 
-
     if (humanReadableErrorMessages.length > 0) {
         return new Error(humanReadableErrorMessages);
     }
     
-    return true;
-
+    return false;
 }
 
 const successMsgTemplate = document.querySelector('#success');
-const successMsgContainer = document.querySelector('.pictures');
 
 function showSuccessMsg() {
   const successMsgFragment = document.createDocumentFragment();
   successMsgFragment.appendChild(successMsgTemplate.content.cloneNode(true));
-  successMsgContainer.appendChild(successMsgFragment);
+  insertAfter(footerBlock, successMsgFragment);
   initSuccessMsgListeners()
 }
 
@@ -306,7 +290,6 @@ function hideSuccessMsg() {
 function onSuccessMsgBtnClick() {
     hideSuccessMsg();
 }
-
 
 //Открытие картинки в полном размере
 const bigPicture = document.querySelector('.big-picture');
@@ -354,4 +337,3 @@ function onBigPictureKeydown(evt) {
 }
 
 generatePicturesDOM(uploadedPhotos);
-console.log(uploadedPhotos);
